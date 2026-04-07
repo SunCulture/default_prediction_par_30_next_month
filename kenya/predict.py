@@ -106,7 +106,7 @@ def extract_data():
 # --------------------------
 def transform_data(accounts, credit, pmts, iot):
 
-    credit['dpd'] = (credit['final_paid_date'] - credit['expected_date']).dt.days
+    credit['dpd'] = (credit['days_late'])
     credit['missed_payment'] = (credit['final_amount_paid'] == 0).astype(int)
     credit['partial_payment'] = ((credit['final_amount_paid'] < credit['expected_amount'])  & (credit['final_amount_paid'] != 0)).astype(int)
     credit['payment_ratio'] = credit['final_amount_paid'] / credit['expected_amount']
@@ -115,6 +115,7 @@ def transform_data(accounts, credit, pmts, iot):
     df = accounts.merge(credit, on=['customer_id','account_id'], how='left')
     df = df.merge(pmts, left_on=['customer_id','month'], right_on=['customer_id','payment_month'], how='left')
     df = df.merge(iot, left_on=['customer_id','month'], right_on=['customer_id','device_timestamp_month'], how='left')
+    df = df.drop_duplicates()
     df = df.sort_values(['customer_id','month'])
 
     df['payment_ratio_1m'] = df.groupby('customer_id')['payment_ratio'].shift(1)
@@ -128,6 +129,9 @@ def transform_data(accounts, credit, pmts, iot):
     df['avg_balance_3m'] = df.groupby('customer_id')['total_balance'].shift(1).rolling(3).mean()
     df['payment_count_3m'] = df.groupby('customer_id')['total_payment_count'].shift(1).rolling(3).sum()
     df['payment_amount_3m'] = df.groupby('customer_id')['total_payment_amount'].shift(1).rolling(3).sum()
+    df['days_late_last_month'] = df.groupby('customer_id')['days_late'].shift(1)
+    df['max_days_late_3m'] = (df.groupby('customer_id')['days_late'].shift(1).rolling(3).max())
+    df['max_days_late_6m'] = (df.groupby('customer_id')['days_late'].shift(1).rolling(6).max())
 
     return df
 
@@ -138,7 +142,8 @@ def predict_all(model, df, credit, cutoff):
     features = [
         'payment_ratio_1m','avg_payment_ratio_3m','avg_payment_ratio_6m',
         'missed_payments_3m','missed_payments_6m','partial_payments_3m',
-        'avg_gap_3m','avg_balance_3m','payment_count_3m','payment_amount_3m'
+        'avg_gap_3m','avg_balance_3m','payment_count_3m','payment_amount_3m',
+        'days_late_last_month','max_days_late_3m','max_days_late_6m'
     ]
     prediction_month = cutoff + pd.offsets.MonthBegin(1)
     df = df[(df['accountType']=="PAYG") & ((df["current_account_status"]=="Arrears") | (df["current_account_status"]=="Current") | (df["current_account_status"]=="Pending Repossession"))]

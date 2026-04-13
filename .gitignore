@@ -1,3 +1,6 @@
 .env
 venv
 kenya/next_month_predictions.csv
+kenya/single_customer_features_used.csv
+kenya/single_customer_prediction.csv
+kenya/single_customer_raw_history.csv

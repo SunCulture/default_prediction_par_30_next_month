@@ -1,0 +1,2 @@
+payment_ratio_1m,avg_payment_ratio_3m,avg_payment_ratio_6m,missed_payments_3m,missed_payments_6m,partial_payments_3m,avg_gap_3m,avg_balance_3m,payment_count_3m,payment_amount_3m,days_late_last_month,max_days_late_3m,max_days_late_6m
+0.0010501443948542925,0.6670167147982848,0.8335083573991424,0.0,0.0,1.0,1268.3333333333333,1268.3333333333333,3.0,11430.0,14.0,30.0,30.0

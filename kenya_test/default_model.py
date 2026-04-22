@@ -166,12 +166,16 @@ def train_model(df):
     X_val, y_val = val[features], val['par30_next_month']
 
     model = XGBClassifier(
-        n_estimators=500,
-        max_depth=5,
+        objective= 'binary:logistic',
+        scale_pos_weight = (len(y_train[y_train==0]) / len(y_train[y_train==1])) * 0.75,
+        n_estimators=250,
+        max_depth=3,
+        min_child_weight=10,
+        gamma=1,
         learning_rate=0.05,
         subsample=0.8,
         colsample_bytree=0.8,
-        eval_metric="auc",
+        eval_metric="error",
         random_state=42
     )
     model.fit(X_train, y_train, eval_set=[(X_val, y_val)], verbose=True)
@@ -191,13 +195,13 @@ def get_expected_dates(credit, prediction_month):
 # --------------------------
 def predict_all(model, df, features, cutoff):
     prediction_month = cutoff + pd.offsets.MonthBegin(1)
-    df = df[(df['accountType']=="PAYG") & ((df["current_account_status"]=="Arrears") | (df["current_account_status"]=="Current") | (df["current_account_status"]=="Pending Repossession"))]
+    df = df[(df['accountType']=="PAYG") & ((df["current_account_status"]=="Advance") | (df["current_account_status"]=="Current"))]
     latest = df[df['month'] <= cutoff].sort_values(['customer_id','month']).groupby('customer_id').tail(1).copy()
     latest['par30_probability'] = model.predict_proba(latest[features])[:,1]
 
     def segment(p):
-        if p < 0.2: return "Low"
-        elif p < 0.5: return "Medium"
+        if p < 0.3: return "Low"
+        elif p < 0.6: return "Medium"
         else: return "High"
 
     latest['risk_segment'] = latest['par30_probability'].apply(segment)

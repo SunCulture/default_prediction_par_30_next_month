@@ -74,12 +74,16 @@ def train_model(df):
     X_val, y_val = val[features], val['par30_next_month']
 
     model = XGBClassifier(
-        n_estimators=500,
-        max_depth=5,
+        objective= 'binary:logistic',
+        scale_pos_weight = (len(y_train[y_train==0]) / len(y_train[y_train==1])) * 0.75,
+        n_estimators=250,
+        max_depth=3,
+        min_child_weight=10,
+        gamma=1,
         learning_rate=0.05,
         subsample=0.8,
         colsample_bytree=0.8,
-        eval_metric="auc",
+        eval_metric="error",
         random_state=42
     )
     model.fit(X_train, y_train, eval_set=[(X_val, y_val)], verbose=True)

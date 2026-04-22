@@ -146,14 +146,14 @@ def predict_all(model, df, credit, cutoff):
         'days_late_last_month','max_days_late_3m','max_days_late_6m'
     ]
     prediction_month = cutoff + pd.offsets.MonthBegin(1)
-    df = df[(df['accountType']=="PAYG") & ((df["current_account_status"]=="Arrears") | (df["current_account_status"]=="Current") | (df["current_account_status"]=="Pending Repossession"))]
+    df = df[(df['accountType']=="PAYG") & ((df["current_account_status"]=="Advance") | (df["current_account_status"]=="Current"))]
 
     latest = df[df['month'] <= cutoff].sort_values(['customer_id','month']).groupby('customer_id').tail(1).copy()
     latest['par30_probability'] = model.predict_proba(latest[features])[:,1]
 
     def segment(p):
-        if p < 0.2: return "Low"
-        elif p < 0.5: return "Medium"
+        if p < 0.3: return "Low"
+        elif p < 0.6: return "Medium"
         else: return "High"
 
     latest['risk_segment'] = latest['par30_probability'].apply(segment)

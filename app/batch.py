@@ -123,12 +123,12 @@ def run_batch(as_of_month):
     # Optional: compute predictions for next month and store
     print("Preparing prediction dataset...")
     def segment(p):
-        if p < 0.2: return "Low"
-        elif p < 0.5: return "Medium"
+        if p < 0.3: return "Low"
+        elif p < 0.6: return "Medium"
         else: return "High"
 
     prediction_month = pd.to_datetime(as_of_month) + pd.offsets.MonthBegin(1)
-    df = df[(df['accountType'] == "PAYG") & df['current_account_status'].isin(["Arrears", "Current", "Pending Repossession"])]
+    df = df[(df['accountType'] == "PAYG") & df['current_account_status'].isin(["Advance", "Current"])]
     latest = df[df['month'] <= as_of_month].sort_values(['customer_id','month']).groupby('customer_id').tail(1)
     print("Saving features...")
     save_features_to_postgres(latest[['customer_id', 'account_id', 'month',

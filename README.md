@@ -56,7 +56,9 @@ curl -X POST "http://localhost:8000/predict/all/{as_of_month}"
 
 For example to predict for April 2026 the command run was;
 
+```bash
 curl -X POST "http://localhost:8000/predict/all/2026-03-01"
+```
 ---
 
 ## 📁 Output

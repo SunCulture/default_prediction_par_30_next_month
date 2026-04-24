@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 def compute_features(accounts, credit, pmts, iot, cutoff):
     credit = credit[credit['month'] <= cutoff]
@@ -8,7 +9,11 @@ def compute_features(accounts, credit, pmts, iot, cutoff):
     credit['dpd'] = credit['days_late']
     credit['missed_payment'] = (credit['final_amount_paid'] == 0).astype(int)
     credit['partial_payment'] = ((credit['final_amount_paid'] < credit['expected_amount']) & (credit['final_amount_paid'] != 0)).astype(int)
-    credit['payment_ratio'] = credit['final_amount_paid'] / credit['expected_amount']
+    credit['payment_ratio'] = np.where(
+        (credit['expected_amount'].notna()) & (credit['expected_amount'] != 0.0),
+        credit['final_amount_paid'] / credit['expected_amount'],
+        0
+        )    
     credit['par30'] = (credit['dpd'] >= 30).astype(int)
 
     df = accounts.merge(credit, on=['customer_id','account_id'], how='left')

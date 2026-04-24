@@ -77,32 +77,39 @@ def extract_data():
     accounts = accounts.drop(['updatedAt','companyRegion'], axis=1)
 
     # Credit
-    credit = pd.read_sql("""
-        SELECT customer_id, account_id, account_type, installment_type,
-               expected_date, expected_amount, final_amount_paid,
-               final_paid_date, amount_due, days_late, total_balance
-        FROM data_science.agg_credit_history_v1
-        WHERE country='kenya'
-    """, conn)
+    credit = ch.query_df("""
+         SELECT customerId AS customer_id, accountId AS account_id, accountType AS account_type, installmentType AS installment_type,
+                expectedDate AS expected_date, expectedAmount AS expected_amount, finalAmountPaid AS final_amount_paid,
+                finalPaidDate AS final_paid_date, amountDue AS amount_due, daysLate AS days_late, total_balance
+        FROM credit_score_model.agg_credit_history_v1
+    """)
     credit['expected_date'] = pd.to_datetime(credit['expected_date'])
     credit['final_paid_date'] = pd.to_datetime(credit['final_paid_date'])
     credit['month'] = credit['expected_date'].dt.to_period('M').dt.to_timestamp()
+    credit['expected_amount'] = credit['expected_amount'].astype(float)
+    credit['final_amount_paid'] = credit['final_amount_paid'].astype(float)
 
     # Payments
-    pmts = pd.read_sql("""
-        SELECT *
-        FROM data_science.agg_monthly_payments_v1
+    pmts = ch.query_df("""
+        SELECT country, customerId AS customer_id, paymentMonth AS payment_month,
+                customerType AS customer_type, totalPaymentCount AS total_payment_count,
+                totalPaymentAmount AS total_payment_amount
+        FROM credit_score_model.agg_monthly_payments_v1
         WHERE country='kenya'
-    """, conn)
+    """)
     pmts['payment_month'] = pd.to_datetime(pmts['payment_month'])
-    pmts = pmts.drop(['country','sync_timestamp','customer_type'], axis=1, errors='ignore')
+    pmts = pmts.drop(['country','customer_type'], axis=1, errors='ignore')
 
     # IOT
-    iot = pd.read_sql("""
-        SELECT *
-        FROM data_science.agg_device_telemetry_v1
+    iot = ch.query_df("""
+        SELECT country, deviceTimestampMonth AS device_timestamp_month, customerId AS customer_id,
+                deviceIdCount AS device_id_count, accountIdCount AS account_id_count, daysWithData AS days_with_data,
+                totalTimeIntervalMins AS total_time_interval_mins, avgTimeIntervalMins AS avg_time_interval_mins,
+                avgEnergyConsumptionKwh AS avg_energy_consumption_kwh, totalEnergyConsumptionKwh AS total_energy_consumption_kwh,
+                totalTelemetryRecordCount AS total_telemetry_record_count
+        FROM credit_score_model.agg_device_telemetry_v1
         WHERE country='kenya'
-    """, conn)
+    """)
     iot['device_timestamp_month'] = pd.to_datetime(iot['device_timestamp_month'])
     iot = iot.drop(['country','sync_timestamp','total_telemetry_record_count',
                     'device_id_count','account_id_count'], axis=1, errors='ignore')

@@ -86,7 +86,7 @@ def save_features_to_postgres(df):
     df = df.where(pd.notnull(df), None)
 
     # OPTIONAL: clear table (only if you want full overwrite like Postgres TRUNCATE)
-    # client.command("TRUNCATE TABLE credit_score_model.feature_store_par30")
+    client.command("TRUNCATE TABLE credit_score_model.feature_store_par30")
 
     # Insert dataframe
     client.insert_df(
@@ -103,7 +103,7 @@ def save_predictions_to_postgres(df):
     df = df.where(pd.notnull(df), None)
 
     # Optional: truncate table (only if you want full overwrite)
-    # client.command("TRUNCATE TABLE credit_score_model.par30_predictions")
+    client.command("TRUNCATE TABLE credit_score_model.par30_predictions")
 
     # Insert DataFrame directly
     client.insert_df(
@@ -138,7 +138,7 @@ def run_batch(as_of_month):
         else: return "Follow Up Gentle Call"
 
     prediction_month = pd.to_datetime(as_of_month) + pd.offsets.MonthBegin(1)
-    df = df[(df['accountType'] == "PAYG") & df['current_account_status'].isin(["Advance", "Current"])]
+    df = df[(df['accountType'] == "PAYG") & df['current_account_status'].isin(["Advance", "Current", 'Arrears', 'Pending Repossession'])]
     latest = df[df['month'] <= as_of_month].sort_values(['customer_id','month']).groupby('customer_id').tail(1)
     print("Saving features...")
     save_features_to_postgres(latest[['customer_id', 'account_id', 'month',

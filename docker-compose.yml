@@ -35,5 +35,30 @@ services:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
 
+  cron:
+    image: python:3.10-slim
+    container_name: par30_cron
+    depends_on:
+      - api
+    volumes:
+      - .:/app
+      - ./logs:/app/logs
+      - ./cronjob:/etc/cron.d/monthly
+    working_dir: /app
+    restart: unless-stopped
+    command: >
+      sh -c "
+      apt-get update &&
+      apt-get install -y cron curl &&
+      touch /app/logs/cron.log &&
+      chmod +x /app/app/run_monthly.sh &&
+      echo 'SHELL=/bin/bash' > /etc/cron.d/monthly &&
+      echo 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin' >> /etc/cron.d/monthly &&
+      echo '0 0 1 * * bash /app/app/run_monthly.sh >> /app/logs/cron.log 2>&1' >> /etc/cron.d/monthly &&
+      chmod 0644 /etc/cron.d/monthly &&
+      crontab /etc/cron.d/monthly || true &&
+      cron -f
+      "
+
 volumes:
   postgres_data:

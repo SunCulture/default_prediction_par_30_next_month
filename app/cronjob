@@ -1,0 +1,4 @@
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+0 0 1 * * bash /app/app/run_monthly.sh >> /app/logs/cron.log 2>&1
